@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+.env
+*.env.local
+
+server/dev.db
+server/*.db-journal
+server/recordings/
+
+.DS_Store
+*.log
