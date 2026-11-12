@@ -1,140 +1,164 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useId, watch } from 'vue'
-import BaseModal from './BaseModal.vue'
-import { callsApi } from '../api/calls'
-import { ApiError } from '../api/http'
-import type { CallSummary, TranscriptLine } from '../types'
+import { computed, nextTick, ref, useId, watch } from "vue";
+import BaseModal from "./BaseModal.vue";
+import { callsApi } from "../api/calls";
+import { ApiError } from "../api/http";
+import type { CallSummary, TranscriptLine } from "../types";
 
-const props = defineProps<{ open: boolean; callId: string; subtitle?: string; transcript: boolean }>()
-const emit = defineEmits<{ close: [] }>()
-const headingId = useId()
+const props = defineProps<{
+  open: boolean;
+  callId: string;
+  subtitle?: string;
+  transcript: boolean;
+}>();
+const emit = defineEmits<{ close: [] }>();
+const headingId = useId();
 
-const src = ref<string | null>(null)
-const videoError = ref('')
-const video = ref<HTMLVideoElement | null>(null)
-const currentTime = ref(0)
+const src = ref<string | null>(null);
+const videoError = ref("");
+const video = ref<HTMLVideoElement | null>(null);
+const currentTime = ref(0);
 
-const lines = ref<TranscriptLine[] | null>(null)
-const transcriptState = ref<'loading' | 'ready' | 'unavailable'>('loading')
-const summary = ref<CallSummary | null>(null)
-const summaryId = useId()
+const lines = ref<TranscriptLine[] | null>(null);
+const transcriptState = ref<"loading" | "ready" | "unavailable">("loading");
+const summary = ref<CallSummary | null>(null);
+const summaryId = useId();
 
-let loadId = 0
+let loadId = 0;
 
 async function loadVideo(id = loadId) {
-  videoError.value = ''
+  videoError.value = "";
   try {
-    const url = await callsApi.recordingLink(props.callId)
-    if (id === loadId) src.value = url
+    const url = await callsApi.recordingLink(props.callId);
+    if (id === loadId) src.value = url;
   } catch (e) {
-    if (id === loadId) videoError.value = e instanceof ApiError ? e.message : 'Could not load the recording'
+    if (id === loadId)
+      videoError.value =
+        e instanceof ApiError ? e.message : "Could not load the recording";
   }
 }
 
 async function loadTranscript(id: number) {
   if (!props.transcript) {
-    transcriptState.value = 'unavailable'
-    return
+    transcriptState.value = "unavailable";
+    return;
   }
-  transcriptState.value = 'loading'
+  transcriptState.value = "loading";
   try {
-    const t = await callsApi.transcript(props.callId)
-    if (id !== loadId) return
-    lines.value = t.segments
-    summary.value = t.summary
-    transcriptState.value = 'ready'
+    const t = await callsApi.transcript(props.callId);
+    if (id !== loadId) return;
+    lines.value = t.segments;
+    summary.value = t.summary;
+    transcriptState.value = "ready";
   } catch {
-    if (id === loadId) transcriptState.value = 'unavailable'
+    if (id === loadId) transcriptState.value = "unavailable";
   }
 }
 
 watch(
   () => props.open,
   (open) => {
-    const id = ++loadId
-    src.value = null
-    lines.value = null
-    summary.value = null
-    currentTime.value = 0
+    const id = ++loadId;
+    src.value = null;
+    lines.value = null;
+    summary.value = null;
+    currentTime.value = 0;
     if (open) {
-      void loadVideo(id)
-      void loadTranscript(id)
+      void loadVideo(id);
+      void loadTranscript(id);
     }
   },
   { immediate: true },
-)
+);
 
-let retriedFor: string | null = null
+let retriedFor: string | null = null;
 async function onVideoError() {
-  const v = video.value
+  const v = video.value;
   if (!v || !src.value || retriedFor === src.value) {
-    videoError.value = 'Could not play the recording'
-    return
+    videoError.value = "Could not play the recording";
+    return;
   }
-  retriedFor = src.value
-  const at = v.currentTime
-  const playing = !v.paused
-  await loadVideo()
-  await nextTick()
+  retriedFor = src.value;
+  const at = v.currentTime;
+  const playing = !v.paused;
+  await loadVideo();
+  await nextTick();
   v.addEventListener(
-    'loadedmetadata',
+    "loadedmetadata",
     () => {
-      v.currentTime = at
-      if (playing) void v.play().catch(() => {})
+      v.currentTime = at;
+      if (playing) void v.play().catch(() => {});
     },
     { once: true },
-  )
-  v.load()
+  );
+  v.load();
 }
 
 const active = computed(() => {
-  const list = lines.value
-  if (!list) return -1
-  let index = -1
-  for (let i = 0; i < list.length && list[i].start <= currentTime.value + 0.05; i++) index = i
-  return index
-})
+  const list = lines.value;
+  if (!list) return -1;
+  let index = -1;
+  for (
+    let i = 0;
+    i < list.length && list[i].start <= currentTime.value + 0.05;
+    i++
+  )
+    index = i;
+  return index;
+});
 
 function jumpTo(line: TranscriptLine) {
-  const v = video.value
-  if (!v) return
-  v.currentTime = line.start
-  currentTime.value = line.start
-  void v.play().catch(() => {})
+  const v = video.value;
+  if (!v) return;
+  v.currentTime = line.start;
+  currentTime.value = line.start;
+  void v.play().catch(() => {});
 }
 
-const list = ref<HTMLElement | null>(null)
-const moreBelow = ref(false)
+const list = ref<HTMLElement | null>(null);
+const moreBelow = ref(false);
 function updateMoreBelow() {
-  const box = list.value
-  moreBelow.value = !!box && box.scrollTop + box.clientHeight < box.scrollHeight - 4
+  const box = list.value;
+  moreBelow.value =
+    !!box && box.scrollTop + box.clientHeight < box.scrollHeight - 4;
 }
-watch(lines, () => void nextTick(updateMoreBelow))
-let userScrolledAt = 0
-const FOLLOW_PAUSE_MS = 4000
+watch(lines, () => void nextTick(updateMoreBelow));
+let userScrolledAt = 0;
+const FOLLOW_PAUSE_MS = 4000;
 function onUserScroll() {
-  userScrolledAt = Date.now()
+  userScrolledAt = Date.now();
 }
 watch(active, async (index) => {
-  if (Date.now() - userScrolledAt < FOLLOW_PAUSE_MS) return
-  await nextTick()
-  const box = list.value
-  const row = box?.querySelector<HTMLElement>(`[data-line="${index}"]`)
-  if (!box || !row) return
-  box.scrollTo({ top: row.offsetTop - box.clientHeight / 3, behavior: 'smooth' })
-})
+  if (Date.now() - userScrolledAt < FOLLOW_PAUSE_MS) return;
+  await nextTick();
+  const box = list.value;
+  const row = box?.querySelector<HTMLElement>(`[data-line="${index}"]`);
+  if (!box || !row) return;
+  box.scrollTo({
+    top: row.offsetTop - box.clientHeight / 3,
+    behavior: "smooth",
+  });
+});
 
 function clock(seconds: number) {
-  const s = Math.floor(seconds)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const s = Math.floor(seconds);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 </script>
 
 <template>
-  <BaseModal :open="open" title="Call recording" :subtitle="subtitle" wide @close="emit('close')">
+  <BaseModal
+    :open="open"
+    title="Call recording"
+    :subtitle="subtitle"
+    wide
+    @close="emit('close')"
+  >
     <div class="review">
       <div class="player">
-        <p v-if="videoError" class="state error" role="alert">{{ videoError }}</p>
+        <p v-if="videoError" class="state error" role="alert">
+          {{ videoError }}
+        </p>
         <video
           v-else-if="src"
           ref="video"
@@ -142,8 +166,12 @@ function clock(seconds: number) {
           controls
           playsinline
           preload="metadata"
-          @timeupdate="currentTime = ($event.target as HTMLVideoElement).currentTime"
-          @seeked="currentTime = ($event.target as HTMLVideoElement).currentTime"
+          @timeupdate="
+            currentTime = ($event.target as HTMLVideoElement).currentTime
+          "
+          @seeked="
+            currentTime = ($event.target as HTMLVideoElement).currentTime
+          "
           @error="onVideoError"
         ></video>
         <p v-else class="state">Loading recording…</p>
@@ -155,48 +183,68 @@ function clock(seconds: number) {
         :aria-labelledby="summaryId"
       >
         <h3 :id="summaryId">Summary</h3>
-        <p v-if="summary?.kind === 'paragraph'" class="paragraph">{{ summary.text }}</p>
-        <template v-else-if="summary?.kind === 'structured'">
-          <div class="field">
-            <h4>Problem</h4>
-            <p>{{ summary.problem }}</p>
+        <div class="summary-body">
+          <p v-if="summary?.kind === 'paragraph'" class="paragraph">
+            {{ summary.text }}
+          </p>
+          <template v-else-if="summary?.kind === 'structured'">
+            <div class="field">
+              <h4>Problem</h4>
+              <p>{{ summary.problem }}</p>
+            </div>
+            <div v-if="summary.stepsTaken.length" class="field">
+              <h4>Steps taken</h4>
+              <ol>
+                <li v-for="(step, i) in summary.stepsTaken" :key="i">
+                  {{ step }}
+                </li>
+              </ol>
+            </div>
+            <div class="field">
+              <h4>Resolution</h4>
+              <p>{{ summary.resolution }}</p>
+            </div>
+            <div class="field">
+              <h4>Follow-ups</h4>
+              <ul v-if="summary.followUps.length">
+                <li v-for="(item, i) in summary.followUps" :key="i">
+                  {{ item }}
+                </li>
+              </ul>
+              <p v-else class="none">Nothing left to do.</p>
+            </div>
+          </template>
+          <div v-else class="empty">
+            <strong>Summary not available</strong>
+            <span
+              >We couldn’t make a summary for this call. The transcript is still
+              here.</span
+            >
           </div>
-          <div v-if="summary.stepsTaken.length" class="field">
-            <h4>Steps taken</h4>
-            <ol>
-              <li v-for="(step, i) in summary.stepsTaken" :key="i">{{ step }}</li>
-            </ol>
-          </div>
-          <div class="field">
-            <h4>Resolution</h4>
-            <p>{{ summary.resolution }}</p>
-          </div>
-          <div class="field">
-            <h4>Follow-ups</h4>
-            <ul v-if="summary.followUps.length">
-              <li v-for="(item, i) in summary.followUps" :key="i">{{ item }}</li>
-            </ul>
-            <p v-else class="none">Nothing left to do.</p>
-          </div>
-        </template>
-        <div v-else class="empty">
-          <strong>Summary not available</strong>
-          <span>We couldn’t make a summary for this call. The transcript is still here.</span>
         </div>
       </section>
 
       <section class="transcript" :aria-labelledby="headingId">
         <div class="transcript-head">
           <h3 :id="headingId">Transcript</h3>
-          <span v-if="lines?.length" class="count">{{ lines.length }} lines</span>
+          <span v-if="lines?.length" class="count"
+            >{{ lines.length }} lines</span
+          >
         </div>
 
-        <p v-if="transcriptState === 'loading'" class="empty">Loading transcript…</p>
+        <p v-if="transcriptState === 'loading'" class="empty">
+          Loading transcript…
+        </p>
         <div v-else-if="transcriptState === 'unavailable'" class="empty">
           <strong>Transcript not available</strong>
-          <span>We couldn’t make a transcript for this call. The recording is still here.</span>
+          <span
+            >We couldn’t make a transcript for this call. The recording is still
+            here.</span
+          >
         </div>
-        <p v-else-if="!lines?.length" class="empty">No speech was picked up in this recording.</p>
+        <p v-else-if="!lines?.length" class="empty">
+          No speech was picked up in this recording.
+        </p>
 
         <ol
           v-else
@@ -211,7 +259,10 @@ function clock(seconds: number) {
             <button
               type="button"
               class="line"
-              :class="[line.speaker === 'CLIENT' ? 'client' : 'consultant', { active: i === active }]"
+              :class="[
+                line.speaker === 'CLIENT' ? 'client' : 'consultant',
+                { active: i === active },
+              ]"
               :aria-current="i === active ? 'true' : undefined"
               :aria-label="`${clock(line.start)}, ${line.name}: ${line.text}. Play from here`"
               @click="jumpTo(line)"
@@ -233,12 +284,22 @@ function clock(seconds: number) {
 .review {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 20px;
   align-items: start;
+  flex: 1 1 auto; /* take the fixed-height panel's remaining space under the header */
+  min-height: 0;
 }
 @media (max-width: 820px) {
+  /* stacked layout: let the panel scroll rather than squeezing everything into the fixed height */
   .review {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    flex: none;
+  }
+  .review .summary {
+    max-height: none;
+    overflow: visible;
   }
   .review > * {
     grid-column: 1 !important;
@@ -407,13 +468,45 @@ function clock(seconds: number) {
 
 .summary {
   grid-column: 1;
+  grid-row: 2;
   min-width: 0;
-  padding: 16px;
+  max-height: 100%; /* fill what's left under the video; the body scrolls, the heading stays put */
+  overflow: hidden;
+  padding: 16px 8px 8px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+.summary-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 8px 8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+}
+.summary-body::-webkit-scrollbar {
+  width: 8px;
+}
+.summary-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.summary-body::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+.summary-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+@supports not selector(::-webkit-scrollbar) {
+  .summary-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
 }
 .summary h3 {
   margin: 0;

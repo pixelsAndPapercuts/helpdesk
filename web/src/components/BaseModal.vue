@@ -61,6 +61,7 @@ function onClick(event: MouseEvent) {
 .modal {
   width: calc(100% - 48px);
   max-width: 520px;
+  max-height: calc(100dvh - 120px - 24px);
   margin: 120px auto auto;
   padding: 0;
   border: none;
@@ -69,13 +70,22 @@ function onClick(event: MouseEvent) {
 }
 .modal.wide {
   max-width: 1080px;
+  height: calc(100dvh - 48px - 24px);
+  max-height: none;
   margin-top: 48px;
+}
+.modal.wide .panel {
+  height: 100%;
 }
 .modal::backdrop {
   background: rgba(7, 34, 61, 0.55);
 }
 
 .panel {
+  box-sizing: border-box;
+  max-height: inherit; /* the dialog's viewport cap; content taller than this scrolls inside the panel */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 28px;
   border-radius: var(--radius-xl);
   background: var(--surface);
