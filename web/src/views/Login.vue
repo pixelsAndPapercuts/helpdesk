@@ -19,9 +19,9 @@ const error = ref('')
 const loading = ref(false)
 
 const demoAccounts: { name: string; email: string; role: Role }[] = [
-  { name: 'Sam', email: 'sam@consultant.test', role: 'CONSULTANT' },
+  { name: 'Jordan', email: 'jordan@consultant.test', role: 'CONSULTANT' },
   { name: 'Alex', email: 'alex@client.test', role: 'CLIENT' },
-  { name: 'Jordan', email: 'jordan@client.test', role: 'CLIENT' },
+  { name: 'Sam', email: 'sam@client.test', role: 'CLIENT' },
 ]
 
 const features = [

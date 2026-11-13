@@ -7,7 +7,7 @@ afterwards both people get the recording, a transcript with speaker names, and a
 - **Web:** Vue 3, TypeScript, Pinia, Vue Router, Vite
 - **API:** NestJS, TypeORM (SQLite), Socket.IO
 - **Calls:** WebRTC (signalling over Socket.IO)
-- **After the call:** ffmpeg (merge), Sarvam or Deepgram (transcript), Gemini or Claude (summary)
+- **After the call:** ffmpeg (merge), Deepgram or Sarvam (transcript), Claude or Gemini (summary)
 
 See [DESIGN.md](DESIGN.md) for how it fits together.
 
@@ -26,11 +26,11 @@ Create `server/.env`:
 
 ```
 JWT_SECRET=any-long-random-string
-SARVAM_API_KEY=...
 DEEPGRAM_API_KEY=...
-GEMINI_API_KEY=...
-# Only if the summary is switched to Claude:
 ANTHROPIC_API_KEY=...
+# Only if switched to Sarvam / Gemini (see server/src/calls/calls.service.ts):
+SARVAM_API_KEY=...
+GEMINI_API_KEY=...
 ```
 
 Optional: `PORT` (default `3001`), `DB_PATH` (default `dev.db`), `RECORDINGS_DIR` (default `recordings`).
@@ -69,18 +69,18 @@ All passwords are `password`. The login page also has one-click buttons for each
 
 | Name | Email | Role |
 |---|---|---|
-| Sam Carter | sam@consultant.test | Consultant |
+| Jordan Lee | jordan@consultant.test | Consultant |
 | Alex Morgan | alex@client.test | Client |
-| Jordan Lee | jordan@client.test | Client |
+| Sam Carter | sam@client.test | Client |
 
 ## Trying the full flow
 
-1. Sign in as **Alex** in one window and **Sam** in another. Sessions are per tab, so two windows
+1. Sign in as **Alex** in one window and **Jordan** in another. Sessions are per tab, so two windows
    of the same browser work.
 2. As Alex, try the payout on the home page (it always fails), then raise a request about it.
-   It shows up in Sam's queue straight away.
-3. As Sam, start a call from the request. Alex joins, shares the screen, and both can talk.
-4. Sam asks to record; Alex allows it. The recording uploads in 5-second chunks during the call.
+   It shows up in Jordan's queue straight away.
+3. As Jordan, start a call from the request. Alex joins, shares the screen, and both can talk.
+4. Jordan asks to record; Alex allows it. The recording uploads in 5-second chunks during the call.
 5. End the call. The call card shows *Processing*, then *Ready*. Open the recording to see the
    video, the summary and the transcript. Click a transcript line to jump to that moment.
 

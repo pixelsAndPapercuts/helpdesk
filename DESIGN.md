@@ -303,16 +303,16 @@ tracks per participant — what meeting tools do — makes attribution exact on 
 
 **Speech-to-text** sits behind one wrapper; one setting picks the provider.
 
-- **Sarvam** (`saaras:v4`, current default) — strong on Indian languages and code-mixed speech.
+- **Sarvam** (`saaras:v4`) — strong on Indian languages and code-mixed speech.
   Its REST API accepts at most 30 seconds of mono audio, so ffmpeg's `silencedetect` finds the
   stretches of speech in each channel, each stretch is sent separately (four in parallel), and
   the cut points become the line times. Silence is never sent, which also saves cost.
-- **Deepgram** (`nova-3`) — the whole stereo file in one request with `multichannel=true`; can
+- **Deepgram** (`nova-3`, current default) — the whole stereo file in one request with `multichannel=true`; can
   also return a one-paragraph summary.
 
 **Summary** — the transcript is sent to an LLM with a fixed JSON schema (problem, steps taken,
-resolution, follow-ups) and validated with zod before it is stored. Gemini is the default;
-Claude is wired in the same way. Because both must return the same shape, the UI doesn't care
+resolution, follow-ups) and validated with zod before it is stored. Claude is the default;
+Gemini is wired in the same way. Because both must return the same shape, the UI doesn't care
 which ran.
 
 **Failure handling.**
