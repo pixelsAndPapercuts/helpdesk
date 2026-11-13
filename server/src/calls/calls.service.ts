@@ -25,8 +25,8 @@ const LINK_TTL = '30m'
 const linkSecret = () => `${process.env.JWT_SECRET}:recording`
 
 // 'deepgram': one paragraph from the transcript request. 'gemini' / 'claude': problem, steps, resolution, follow-ups.
-const SUMMARY_BY: 'deepgram' | 'gemini' | 'claude' = 'gemini'
-const TRANSCRIBE_BY: TranscribeProvider = 'sarvam'
+const SUMMARY_BY: 'deepgram' | 'gemini' | 'claude' = 'claude'
+const TRANSCRIBE_BY: TranscribeProvider = 'deepgram'
 
 export interface TranscriptResponse {
   callId: string

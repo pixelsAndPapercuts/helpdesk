@@ -7,9 +7,9 @@ import { Role, User } from './user.entity'
 const DEMO_PASSWORD = 'password'
 
 const DEMO_USERS: { name: string; email: string; role: Role }[] = [
-  { name: 'Sam Carter', email: 'sam@consultant.test', role: 'CONSULTANT' },
+  { name: 'Jordan Lee', email: 'jordan@consultant.test', role: 'CONSULTANT' },
   { name: 'Alex Morgan', email: 'alex@client.test', role: 'CLIENT' },
-  { name: 'Jordan Lee', email: 'jordan@client.test', role: 'CLIENT' },
+  { name: 'Sam Carter', email: 'sam@client.test', role: 'CLIENT' },
 ]
 
 @Injectable()
